@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, current_user
 from pericles import modelos
-from pericles.forms import LoginForm
+from pericles.formularios import LoginForm, CreateInitiativeForm
 
 @app.route('/')
 def index():
@@ -60,17 +60,50 @@ def firmar_iniciativa(id_iniciativa):
 @app.route('/crear_iniciativa', methods=['GET', 'POST'])
 @login_required
 def crear_iniciativa():
-    """Ruta para crear una iniciativa."""
-    # Se agrega la importación del formulario correspondiente
-    from pericles.forms import CreateInitiativeForm
-
+    """Ruta para crear una iniciativa (propuesta de ley)."""
     form = CreateInitiativeForm()
     if form.validate_on_submit():
+        # Procesar los datos del formulario
+        titulo_iniciativa = form.titulo_iniciativa.data['titulo']
+        autores_iniciativa = form.autores_iniciativa.data['autores']
+        exposicion_motivos_iniciativa = form.exposicion_motivos_iniciativa.data['exposicion_motivos']
+        capitulos_iniciativa = []
+        for capitulo in form.capitulos_iniciativa.data:
+            titulo_capitulo = capitulo['titulo_capitulo']
+            secciones_capitulo = []
+            for seccion in capitulo['secciones']:
+                titulo_seccion = seccion['titulo_seccion']
+                articulos_seccion = []
+                for articulo in seccion['articulos']:
+                    numero_articulo = articulo['numero_articulo']
+                    contenido_articulo = articulo['contenido_articulo']
+                    # Crear el objeto "Artículo"
+                    articulo_obj = models.Articulo(
+                        numero_articulo=numero_articulo,
+                        contenido_articulo=contenido_articulo
+                    )
+                    articulos_seccion.append(articulo_obj)
+                # Crear el objeto "Sección"
+                seccion_obj = models.Seccion(
+                    titulo_seccion=titulo_seccion,
+                    articulos=articulos_seccion
+                )
+                secciones_capitulo.append(seccion_obj)
+            # Crear el objeto "Capítulo"
+            capitulo_obj = models.Capitulo(
+                titulo_capitulo=titulo_capitulo,
+                secciones=secciones_capitulo
+            )
+            capitulos_iniciativa.append(capitulo_obj)
+        # Crear el objeto "Iniciativa"
         nueva_iniciativa = models.Iniciativa(
-            titulo=form.titulo.data,
-            descripcion=form.descripcion.data,
-            proponentes=form.proponentes.data,
-            categoria=form.categoria.data
+            titulo=titulo_iniciativa,
+            autores=autores_iniciativa,
+            exposicion_motivos=exposicion_motivos_iniciativa,
+            capitulos=capitulos_iniciativa,
+            fecha_limite=form.fecha_limite.data,
+            # Manejar la carga de documentos (si se adjuntaron)
+            # ...
         )
         db.session.add(nueva_iniciativa)
         db.session.commit()
