@@ -15,7 +15,7 @@ def inject_user():
     """Inyecta el usuario actual en el contexto de la plantilla"""
     return {'current_user': current_user}
 
-from app import rutas  # Importa las rutas después de la inicialización de login_manager
+from pelicles import rutas  # Importa las rutas después de la inicialización de login_manager
 
 if __name__ == '__main__':
     pericles.run(debug=True)
